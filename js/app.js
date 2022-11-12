@@ -1,6 +1,10 @@
 new Vue({
     el: '#app',
     data: {
+        isShowingCart: false,
+        cart: {
+            items: []
+        },
         products: [
             {
                 id: 1,
@@ -21,7 +25,7 @@ new Vue({
                 name: 'HP Officejet 5740 e-All-in-One-printer',
                 description: 'This one might not last for so long, but hey, printers never work anyways, right?',
                 price: 149,
-                inStock: 5
+                inStock: 3
             },
             {
                 id: 4,
@@ -45,5 +49,87 @@ new Vue({
                 inStock: 81
             }
         ]
+    },
+    methods: {
+        addProductToCart: function(product) {
+            var cartItem = this.getCartItem(product);
+            
+            if (cartItem != null) {
+                cartItem.quantity++;
+            } else {
+                this.cart.items.push({
+                    product: product,
+                    quantity: 1
+                });
+            }
+
+            product.inStock--;
+        },
+
+        getCartItem: function(product) {
+            for (let i = 0; i < this.cart.items.length; i++) {
+                if (this.cart.items[i].product.id == product.id) {
+                    return this.cart.items[i];
+                }
+            }
+            return null;
+        },
+
+        increaseQuanlity: function(cartItem) {
+            cartItem.quantity++;
+            cartItem.product.inStock--;
+
+        }, 
+
+        decreaseQuanlity: function(cartItem) {
+            cartItem.quantity--;
+            cartItem.product.inStock++;
+
+            if (cartItem.quantity == 0) {
+                this.removeItemFromCart(cartItem);
+            }
+        },
+
+        removeItemFromCart: function(cartItem) {
+            var index = this.cart.items.indexOf(cartItem);
+
+            if (index !== -1) {
+                this.cart.items.splice(index, 1);
+            }
+        },
+
+        checkout: function() {
+            if (confirm('Are u sure purchase ?')) {
+                this.cart.items.forEach((item) => {
+                    item.product.inStock -= item.quantity;
+                });
+                this.cart.items = [];
+            }
+        }
+    },
+    computed: {
+        cartTotal: function() {
+            var total = 0;
+
+            this.cart.items.forEach((item) => {
+                total += item.quantity * item.product.price;
+            });
+
+            return total;
+        },
+        taxAmount: function() {
+            return ((this.cartTotal * 10 ) / 100);
+        }
+    },
+    filters: {
+        currency: function(value) {
+            var formatter = Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0
+            });
+
+            return formatter.format(value);
+        }
     }
 });
